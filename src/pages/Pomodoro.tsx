@@ -102,7 +102,7 @@ const randomTip = (tips: string[]) =>
 // Modes
 // ─────────────────────────────────────────────
 const MODES = {
-  pomodoro:   { label: 'work',        duration: 1 * 60, type: 'work'       },
+  pomodoro:   { label: 'work',        duration: 25 * 60, type: 'work'       },
   shortBreak: { label: 'short break', duration:  5 * 60, type: 'break'      },
   longBreak:  { label: 'long break',  duration: 15 * 60, type: 'long_break' },
 } as const;

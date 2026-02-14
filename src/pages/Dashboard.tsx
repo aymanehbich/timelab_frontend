@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
 import { gamificationApi } from '../services/api';
+import { eisenhowerApi } from '../components/eisenhower';
+import type { QuizProgress } from '../components/eisenhower';
 
 interface UserStats {
   total_points: string | number;
@@ -49,23 +51,30 @@ export default function Dashboard() {
   const [userLevel, setUserLevel] = useState<UserLevel | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+  const [eisenhowerProgress, setEisenhowerProgress] = useState<QuizProgress | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch gamification data
   useEffect(() => {
     const fetchGamificationData = async () => {
       try {
-        const [statsRes, levelRes, badgesRes, leaderboardRes] = await Promise.all([
+        const [statsRes, levelRes, badgesRes, leaderboardRes, eisenhowerRes] = await Promise.all([
           gamificationApi.getStats(),
           gamificationApi.getLevel(),
           gamificationApi.getUserBadges(),
           gamificationApi.getLeaderboard(),
+          eisenhowerApi.getProgress(),
         ]);
-        
+
         setUserStats(statsRes.data);
         setUserLevel(levelRes.data);
         setBadges(badgesRes.data);
         setLeaderboard(leaderboardRes.data);
+        const overall = eisenhowerRes?.overall ?? null;
+        if (overall && overall.total_tasks > 0) {
+          overall.score_percentage = Math.round((overall.correct / overall.total_tasks) * 100);
+        }
+        setEisenhowerProgress(overall);
       } catch (error) {
         console.error('Failed to fetch gamification data:', error);
       } finally {
@@ -360,20 +369,24 @@ export default function Dashboard() {
               </svg>
               <h3 className="font-semibold text-text">Eisenhower</h3>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-text-muted">Urgent & Important</span>
-                <span className="text-text font-medium">3 tasks</span>
+            {loading ? <SmallLoader /> : eisenhowerProgress ? (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Score</span>
+                  <span className="text-primary font-medium">{eisenhowerProgress.score_percentage ?? 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Correctes</span>
+                  <span className="text-success font-medium">{eisenhowerProgress.correct ?? 0}/{eisenhowerProgress.total_tasks ?? 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Points gagnés</span>
+                  <span className="text-text font-medium">{eisenhowerProgress.total_points_earned ?? 0}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted">Important</span>
-                <span className="text-text font-medium">5 tasks</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted">Delegated</span>
-                <span className="text-text font-medium">2 tasks</span>
-              </div>
-            </div>
+            ) : (
+              <p className="text-xs text-text-muted">Pas encore de données</p>
+            )}
           </div>
 
           {/* Parkinson Stats */}
