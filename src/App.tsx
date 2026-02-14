@@ -7,9 +7,10 @@ import TimeBlocking from './pages/TimeBlocking';
 import Pomodoro from './pages/Pomodoro';
 import Eisenhower from './pages/Eisenhower';
 import Parkinson from './pages/Parkinson';
-import Reflection from './pages/Reflection';
+import ParkinsonHub from './pages/ParkinsonHub';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import GuestRoute from './components/layout/GuestRoute';
+
 
 function App() {
   return (
@@ -69,18 +70,19 @@ function App() {
             path="/parkinson"
             element={
               <ProtectedRoute>
-                <Parkinson />
+                <ParkinsonHub />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/reflection"
+            path="/parkinson/:type"
             element={
               <ProtectedRoute>
-                <Reflection />
+                <Parkinson />
               </ProtectedRoute>
             }
           />
+        
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>

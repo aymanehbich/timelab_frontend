@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
-import { gamificationApi } from '../services/api';
 import { eisenhowerApi } from '../components/eisenhower';
 import type { QuizProgress } from '../components/eisenhower';
+import api, { gamificationApi } from '../services/api';
 
 interface UserStats {
   total_points: string | number;
@@ -43,15 +43,23 @@ interface LeaderboardUser {
   level: number;
 }
 
+interface TypingStats {
+  completed_challenges: number;
+  average_accuracy: number;
+  average_wpm: number;
+  best_wpm: number;
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
-  
+
   // API data states
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [userLevel, setUserLevel] = useState<UserLevel | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
   const [eisenhowerProgress, setEisenhowerProgress] = useState<QuizProgress | null>(null);
+  const [typingStats, setTypingStats] = useState<TypingStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch gamification data
@@ -64,6 +72,7 @@ export default function Dashboard() {
           gamificationApi.getUserBadges(),
           gamificationApi.getLeaderboard(),
           eisenhowerApi.getProgress(),
+          api.get('/parkinson/typing/stats'),
         ]);
 
         setUserStats(statsRes.data);
@@ -75,6 +84,7 @@ export default function Dashboard() {
           overall.score_percentage = Math.round((overall.correct / overall.total_tasks) * 100);
         }
         setEisenhowerProgress(overall);
+        setTypingStats(typingRes.data.data);
       } catch (error) {
         console.error('Failed to fetch gamification data:', error);
       } finally {
@@ -400,15 +410,21 @@ export default function Dashboard() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-text-muted">Challenges done</span>
-                <span className="text-text font-medium">18</span>
+                <span className="text-text font-medium">
+                  {loading ? <SmallLoader /> : (typingStats?.completed_challenges ?? 0)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Avg accuracy</span>
-                <span className="text-text font-medium">87%</span>
+                <span className="text-text font-medium">
+                  {loading ? <SmallLoader /> : `${Math.round(typingStats?.average_accuracy ?? 0)}%`}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-muted">Time saved</span>
-                <span className="text-text font-medium">2.3h</span>
+                <span className="text-text-muted">Best WPM</span>
+                <span className="text-text font-medium">
+                  {loading ? <SmallLoader /> : Math.round(typingStats?.best_wpm ?? 0)}
+                </span>
               </div>
             </div>
           </div>
