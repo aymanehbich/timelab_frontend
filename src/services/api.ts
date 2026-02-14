@@ -49,4 +49,5 @@ export const gamificationApi = {
   getLevel: () => api.get('/level'),
 };
 
+
 export default api;
