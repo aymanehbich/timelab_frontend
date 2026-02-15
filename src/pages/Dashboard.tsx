@@ -66,7 +66,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchGamificationData = async () => {
       try {
-        const [statsRes, levelRes, badgesRes, leaderboardRes, eisenhowerRes] = await Promise.all([
+        const [statsRes, levelRes, badgesRes, leaderboardRes, eisenhowerRes, typingRes] = await Promise.all([
           gamificationApi.getStats(),
           gamificationApi.getLevel(),
           gamificationApi.getUserBadges(),
@@ -524,27 +524,24 @@ export default function Dashboard() {
               <h2 className="text-lg font-semibold text-text">
                 Badges {!loading && <span className="text-sm text-text-muted">({badges.length})</span>}
               </h2>
-              <button className="text-sm text-text-muted hover:text-text transition-colors">
-                View all
-              </button>
             </div>
             {loading ? (
               <Loader />
             ) : badges.length > 0 ? (
-              <div className="grid grid-cols-3 gap-3">
-                {badges.slice(0, 6).map((badge) => (
-                  <div 
+              <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
+                {badges.map((badge) => (
+                  <div
                     key={badge.id}
-                    className="flex flex-col items-center p-3 rounded-button bg-background-secondary"
+                    className="flex flex-col items-center p-3 rounded-button bg-background-secondary min-w-[90px]"
                     title={badge.description}
                   >
                     <span className="text-2xl mb-1">{badge.icon || '🏅'}</span>
-                    <span className="text-xs text-text-muted text-center">{badge.name}</span>
+                    <span className="text-xs text-text-muted text-center break-words">{badge.name}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex gap-3 overflow-x-auto pb-2">
                 {/* Placeholder badges when no badges earned */}
                 {[
                   { name: 'Early Bird', emoji: '🌅' },
@@ -554,12 +551,12 @@ export default function Dashboard() {
                   { name: 'Achiever', emoji: '🏆' },
                   { name: 'Planner', emoji: '📋' },
                 ].map((badge) => (
-                  <div 
+                  <div
                     key={badge.name}
-                    className="flex flex-col items-center p-3 rounded-button bg-background-secondary opacity-40"
+                    className="flex flex-col items-center p-3 rounded-button bg-background-secondary opacity-40 min-w-[90px]"
                   >
                     <span className="text-2xl mb-1">{badge.emoji}</span>
-                    <span className="text-xs text-text-muted text-center">{badge.name}</span>
+                    <span className="text-xs text-text-muted text-center break-words">{badge.name}</span>
                   </div>
                 ))}
               </div>
