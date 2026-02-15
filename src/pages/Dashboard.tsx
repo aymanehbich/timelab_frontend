@@ -59,6 +59,7 @@ const [pomodoroStats, setPomodoroStats] = useState({
   best_day       : 0,
   total_sessions : 0
 });
+const [pomodoroLoading, setPomodoroLoading] = useState(true);
 
 useEffect(() => {
   fetch('http://localhost:8000/api/pomodoro/stats', {
@@ -69,7 +70,8 @@ useEffect(() => {
   })
     .then(res => res.json())
     .then(data => setPomodoroStats(data))
-    .catch(console.error);
+    .catch(console.error)
+    .finally(() => setPomodoroLoading(false));
 }, []);
 
   // API data states
@@ -114,15 +116,9 @@ useEffect(() => {
     fetchGamificationData();
   }, []);
 
-  // Mock data for non-gamification stats - keep as is
-  const stats = {
-    totalPomodoros: 47,
-    totalFocusTime: 1175, // in minutes
-    tasksCompleted: 23,
-    currentStreak: 5,
-    longestStreak: 12,
-    totalPoints: userStats?.total_points ?? 2350,
-  };
+  // Derived stats from API data
+  const totalFocusTime = pomodoroStats.total_sessions * 25; // 25 min per session
+  const tasksCompleted = eisenhowerProgress?.total_tasks ?? 0;
 
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -205,7 +201,7 @@ useEffect(() => {
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Points - From API */}
           <div className="bg-background-card rounded-card border border-primary/30 p-4">
             <div className="flex items-center gap-3">
@@ -231,7 +227,7 @@ useEffect(() => {
               </div>
               <div>
                 <p className="text-xs text-text-muted">Pomodoros</p>
-                <p className="text-xl font-bold text-text">{pomodoroStats.total_sessions}</p>
+                <p className="text-xl font-bold text-text">{pomodoroLoading ? <SmallLoader /> : pomodoroStats.total_sessions}</p>
               </div>
             </div>
           </div>
@@ -246,7 +242,7 @@ useEffect(() => {
               </div>
               <div>
                 <p className="text-xs text-text-muted">Focus Time</p>
-                <p className="text-xl font-bold text-text">{formatTime(stats.totalFocusTime)}</p>
+                <p className="text-xl font-bold text-text">{pomodoroLoading ? <SmallLoader /> : formatTime(totalFocusTime)}</p>
               </div>
             </div>
           </div>
@@ -261,26 +257,11 @@ useEffect(() => {
               </div>
               <div>
                 <p className="text-xs text-text-muted">Tasks Done</p>
-                <p className="text-xl font-bold text-text">{stats.tasksCompleted}</p>
+                <p className="text-xl font-bold text-text">{tasksCompleted}</p>
               </div>
             </div>
           </div>
 
-          {/* Current Streak */}
-          <div className="bg-background-card rounded-card border border-border-light p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-background-secondary flex items-center justify-center">
-                <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-xs text-text-muted">Streak</p>
-                <p className="text-xl font-bold text-text">{stats.currentStreak} days</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Method Stats Cards */}
@@ -299,19 +280,19 @@ useEffect(() => {
     <div className="flex justify-between">
       <span className="text-text-muted">Today</span>
       <span className="text-text font-medium">
-        {pomodoroStats.today_sessions} sessions   {/* ← dynamique */}
+        {pomodoroLoading ? <SmallLoader /> : `${pomodoroStats.today_sessions} sessions`}
       </span>
     </div>
     <div className="flex justify-between">
       <span className="text-text-muted">Avg/day</span>
       <span className="text-text font-medium">
-        {pomodoroStats.avg_per_day} sessions      {/* ← dynamique */}
+        {pomodoroLoading ? <SmallLoader /> : `${pomodoroStats.avg_per_day} sessions`}
       </span>
     </div>
     <div className="flex justify-between">
       <span className="text-text-muted">Best day</span>
       <span className="text-text font-medium">
-        {pomodoroStats.best_day} sessions         {/* ← dynamique */}
+        {pomodoroLoading ? <SmallLoader /> : `${pomodoroStats.best_day} sessions`}
       </span>
     </div>
   </div>
@@ -349,24 +330,26 @@ useEffect(() => {
               </svg>
               <h3 className="font-semibold text-text">Eisenhower</h3>
             </div>
-            {loading ? <SmallLoader /> : eisenhowerProgress ? (
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Score</span>
-                  <span className="text-primary font-medium">{eisenhowerProgress.score_percentage ?? 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Correctes</span>
-                  <span className="text-success font-medium">{eisenhowerProgress.correct ?? 0}/{eisenhowerProgress.total_tasks ?? 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Points gagnés</span>
-                  <span className="text-text font-medium">{eisenhowerProgress.total_points_earned ?? 0}</span>
-                </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-text-muted">Score</span>
+                <span className="text-primary font-medium">
+                  {loading ? <SmallLoader /> : `${eisenhowerProgress?.score_percentage ?? 0}%`}
+                </span>
               </div>
-            ) : (
-              <p className="text-xs text-text-muted">Pas encore de données</p>
-            )}
+              <div className="flex justify-between">
+                <span className="text-text-muted">Correctes</span>
+                <span className="text-success font-medium">
+                  {loading ? <SmallLoader /> : `${eisenhowerProgress?.correct ?? 0}/${eisenhowerProgress?.total_tasks ?? 0}`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Points gagnés</span>
+                <span className="text-text font-medium">
+                  {loading ? <SmallLoader /> : (eisenhowerProgress?.total_points_earned ?? 0)}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Parkinson Stats */}
