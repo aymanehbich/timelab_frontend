@@ -3,7 +3,8 @@ import Layout from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
 import { eisenhowerApi } from '../components/eisenhower';
 import type { QuizProgress } from '../components/eisenhower';
-import api, { gamificationApi } from '../services/api';
+import api, { gamificationApi, timeBlockAPI } from '../services/api';
+import type { Statistics } from '../services/api';
 
 interface UserStats {
   total_points: string | number;
@@ -81,25 +82,28 @@ useEffect(() => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
   const [eisenhowerProgress, setEisenhowerProgress] = useState<QuizProgress | null>(null);
   const [typingStats, setTypingStats] = useState<TypingStats | null>(null);
+  const [timeBlockStats, setTimeBlockStats] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch gamification data
   useEffect(() => {
     const fetchGamificationData = async () => {
       try {
-        const [statsRes, levelRes, badgesRes, leaderboardRes, eisenhowerRes, typingRes] = await Promise.all([
+        const [statsRes, levelRes, badgesRes, leaderboardRes, eisenhowerRes, typingRes, tbStatsRes] = await Promise.all([
           gamificationApi.getStats(),
           gamificationApi.getLevel(),
           gamificationApi.getUserBadges(),
           gamificationApi.getLeaderboard(),
           eisenhowerApi.getProgress(),
           api.get('/parkinson/typing/stats'),
+          timeBlockAPI.getStatistics(),
         ]);
 
         setUserStats(statsRes.data);
         setUserLevel(levelRes.data);
         setBadges(badgesRes.data);
         setLeaderboard(leaderboardRes.data);
+        setTimeBlockStats(tbStatsRes);
         const overall = eisenhowerRes?.overall ?? null;
         if (overall && overall.total_tasks > 0) {
           overall.score_percentage = Math.round((overall.correct / overall.total_tasks) * 100);
@@ -118,7 +122,7 @@ useEffect(() => {
 
   // Derived stats from API data
   const totalFocusTime = pomodoroStats.total_sessions * 25; // 25 min per session
-  const tasksCompleted = eisenhowerProgress?.total_tasks ?? 0;
+  const tasksCompleted = pomodoroStats.total_sessions;
 
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -309,15 +313,21 @@ useEffect(() => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-text-muted">Today's blocks</span>
-                <span className="text-text font-medium">6 blocks</span>
+                <span className="text-text font-medium">
+                  {loading ? <SmallLoader /> : `${timeBlockStats?.total ?? 0} blocks`}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Completed</span>
-                <span className="text-text font-medium">83%</span>
+                <span className="text-text font-medium">
+                  {loading ? <SmallLoader /> : `${timeBlockStats?.percentage ?? 0}%`}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-muted">Planned hours</span>
-                <span className="text-text font-medium">5.5h</span>
+                <span className="text-text-muted">Remaining</span>
+                <span className="text-text font-medium">
+                  {loading ? <SmallLoader /> : `${timeBlockStats?.remaining ?? 0} blocks`}
+                </span>
               </div>
             </div>
           </div>
