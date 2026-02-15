@@ -283,63 +283,6 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Weekly Activity Chart */}
-          <div className="bg-background-card rounded-card border border-border-light p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-text">Weekly Activity</h2>
-              <select className="text-sm text-text-muted bg-background-secondary border border-border rounded-button px-3 py-1.5">
-                <option>This Week</option>
-                <option>Last Week</option>
-                <option>Last Month</option>
-              </select>
-            </div>
-            {/* Chart Placeholder */}
-            <div className="h-48 flex items-end justify-between gap-2 px-2">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
-                const heights = [60, 80, 45, 90, 70, 30, 50];
-                return (
-                  <div key={day} className="flex-1 flex flex-col items-center gap-2">
-                    <div 
-                      className="w-full bg-primary rounded-t-sm transition-all hover:bg-primary-hover"
-                      style={{ height: `${heights[i]}%` }}
-                    />
-                    <span className="text-xs text-text-muted">{day}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Method Distribution Chart */}
-          <div className="bg-background-card rounded-card border border-border-light p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">Method Usage</h2>
-            {/* Horizontal Bar Chart Placeholder */}
-            <div className="space-y-4">
-              {[
-                { name: 'Pomodoro', value: 45, color: 'bg-primary' },
-                { name: 'Time Blocking', value: 30, color: 'bg-text-secondary' },
-                { name: 'Eisenhower', value: 15, color: 'bg-text-muted' },
-                { name: 'Parkinson', value: 10, color: 'bg-border' },
-              ].map((method) => (
-                <div key={method.name} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-text">{method.name}</span>
-                    <span className="text-text-muted">{method.value}%</span>
-                  </div>
-                  <div className="h-2 bg-background-secondary rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${method.color} rounded-full transition-all`}
-                      style={{ width: `${method.value}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Method Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Pomodoro Stats */}
@@ -457,30 +400,8 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Recent Activity & Badges Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Activity */}
-          <div className="bg-background-card rounded-card border border-border-light p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">Recent Activity</h2>
-            <div className="space-y-4">
-              {[
-                { action: 'Completed 4 Pomodoro sessions', time: '2 hours ago', icon: '🍅' },
-                { action: 'Finished "Project Report" task', time: '3 hours ago', icon: '✅' },
-                { action: 'Earned "Early Bird" badge', time: '5 hours ago', icon: '🏅' },
-                { action: 'Completed Parkinson challenge', time: 'Yesterday', icon: '⚡' },
-                { action: 'Added 5 time blocks', time: 'Yesterday', icon: '📅' },
-              ].map((activity, i) => (
-                <div key={i} className="flex items-center gap-3 pb-3 border-b border-border-light last:border-0 last:pb-0">
-                  <span className="text-xl">{activity.icon}</span>
-                  <div className="flex-1">
-                    <p className="text-sm text-text">{activity.action}</p>
-                    <p className="text-xs text-text-muted">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
+        {/* Leaderboard & Badges Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Leaderboard - Using API Data */}
           <div className="bg-background-card rounded-card border border-border-light p-6">
             <h2 className="text-lg font-semibold text-text mb-4">🏆 Leaderboard</h2>
