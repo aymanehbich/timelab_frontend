@@ -53,6 +53,25 @@ interface TypingStats {
 export default function Dashboard() {
   const { user } = useAuth();
 
+const [pomodoroStats, setPomodoroStats] = useState({
+  today_sessions : 0,
+  avg_per_day    : 0,
+  best_day       : 0,
+  total_sessions : 0
+});
+
+useEffect(() => {
+  fetch('http://localhost:8000/api/pomodoro/stats', {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      'Accept': 'application/json',
+    },
+  })
+    .then(res => res.json())
+    .then(data => setPomodoroStats(data))
+    .catch(console.error);
+}, []);
+
   // API data states
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [userLevel, setUserLevel] = useState<UserLevel | null>(null);
@@ -212,7 +231,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-xs text-text-muted">Pomodoros</p>
-                <p className="text-xl font-bold text-text">{stats.totalPomodoros}</p>
+                <p className="text-xl font-bold text-text">{pomodoroStats.total_sessions}</p>
               </div>
             </div>
           </div>
@@ -324,28 +343,36 @@ export default function Dashboard() {
         {/* Method Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Pomodoro Stats */}
-          <div className="bg-background-card rounded-card border border-border-light p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h3 className="font-semibold text-text">Pomodoro</h3>
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-text-muted">Today</span>
-                <span className="text-text font-medium">4 sessions</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted">Avg/day</span>
-                <span className="text-text font-medium">6.7 sessions</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted">Best day</span>
-                <span className="text-text font-medium">12 sessions</span>
-              </div>
-            </div>
-          </div>
+        <div className="bg-background-card rounded-card border border-border-light p-5">
+  <div className="flex items-center gap-2 mb-3">
+    <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24"
+      stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <h3 className="font-semibold text-text">Pomodoro</h3>
+  </div>
+  <div className="space-y-2 text-sm">
+    <div className="flex justify-between">
+      <span className="text-text-muted">Today</span>
+      <span className="text-text font-medium">
+        {pomodoroStats.today_sessions} sessions   {/* ← dynamique */}
+      </span>
+    </div>
+    <div className="flex justify-between">
+      <span className="text-text-muted">Avg/day</span>
+      <span className="text-text font-medium">
+        {pomodoroStats.avg_per_day} sessions      {/* ← dynamique */}
+      </span>
+    </div>
+    <div className="flex justify-between">
+      <span className="text-text-muted">Best day</span>
+      <span className="text-text font-medium">
+        {pomodoroStats.best_day} sessions         {/* ← dynamique */}
+      </span>
+    </div>
+  </div>
+</div>
 
           {/* Time Blocking Stats */}
           <div className="bg-background-card rounded-card border border-border-light p-5">

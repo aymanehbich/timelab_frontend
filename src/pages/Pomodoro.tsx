@@ -102,7 +102,7 @@ const randomTip = (tips: string[]) =>
 // Modes
 // ─────────────────────────────────────────────
 const MODES = {
-  pomodoro:   { label: 'work',        duration: 25 * 60, type: 'work'       },
+  pomodoro:   { label: 'work',        duration: 1 * 60, type: 'work'       },
   shortBreak: { label: 'short break', duration:  5 * 60, type: 'break'      },
   longBreak:  { label: 'long break',  duration: 15 * 60, type: 'long_break' },
 } as const;
@@ -385,7 +385,7 @@ function PomodoroTimer(): JSX.Element {
           <p className="text-2xl font-bold">+{rewardToast.points} pts 🎉</p>
           {rewardToast.multiplier > 1 && (
             <p className="text-yellow-400 text-sm mt-1">
-              🔥 Bonus x{rewardToast.multiplier} — {rewardToast.streak} consecutive days
+              🔥 Bonus x{rewardToast.multiplier} — {rewardToast.streak} jours consécutifs
             </p>
           )}
           {rewardToast.newBadge && (
