@@ -99,23 +99,32 @@ const randomTip = (tips: string[]) =>
   tips[Math.floor(Math.random() * tips.length)];
 
 // ─────────────────────────────────────────────
-// Modes
+// Modes — durées modifiables via settings
 // ─────────────────────────────────────────────
-const MODES = {
-  pomodoro:   { label: 'work',        duration: 1 * 60, type: 'work'       },
+type ModeKey = 'pomodoro' | 'shortBreak' | 'longBreak';
+
+interface ModeConfig {
+  label:    string;
+  duration: number; // en secondes
+  type:     string;
+}
+
+// Valeurs par défaut (utilisées pour init du state)
+const DEFAULT_DURATIONS: Record<ModeKey, ModeConfig> = {
+  pomodoro:   { label: 'work',        duration: 25 * 60, type: 'work'       },
   shortBreak: { label: 'short break', duration:  5 * 60, type: 'break'      },
   longBreak:  { label: 'long break',  duration: 15 * 60, type: 'long_break' },
-} as const;
+};
 
 // ─────────────────────────────────────────────
 // Composant principal
 // ─────────────────────────────────────────────
 function PomodoroTimer(): JSX.Element {
-  type ModeKey = keyof typeof MODES;
 
   // — Timer —
+  const [modes, setModes]         = useState<Record<ModeKey, ModeConfig>>(DEFAULT_DURATIONS);
   const [mode, setMode]           = useState<ModeKey>('pomodoro');
-  const [timeLeft, setTimeLeft]   = useState<number>(MODES.pomodoro.duration);
+  const [timeLeft, setTimeLeft]   = useState<number>(DEFAULT_DURATIONS.pomodoro.duration);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const intervalRef               = useRef<number | null>(null);
 
@@ -150,6 +159,13 @@ function PomodoroTimer(): JSX.Element {
   const [isLoading, setIsLoading]             = useState<boolean>(false);
   const [windowSize, setWindowSize]           = useState({ width: 0, height: 0 });
 
+  // — Settings : valeurs temporaires pendant l'édition ——
+  const [tempDurations, setTempDurations] = useState({
+    pomodoro:   25,
+    shortBreak:  5,
+    longBreak:  15,
+  });
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     console.log('🔑 [AUTH] Token au montage :', token ? `présent (${token.substring(0, 20)}...)` : 'MANQUANT ❌');
@@ -175,7 +191,7 @@ function PomodoroTimer(): JSX.Element {
       window.clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    setTimeLeft(MODES[newMode].duration);
+    setTimeLeft(modes[newMode].duration);  // ← modes state
     setTaskName('');
     setBreakSuggestion(null);
   };
@@ -232,7 +248,7 @@ function PomodoroTimer(): JSX.Element {
     } else {
       setMode('pomodoro');
       modeRef.current = 'pomodoro';
-      setTimeLeft(MODES.pomodoro.duration);
+      setTimeLeft(modes.pomodoro.duration);  // ← modes state
     }
   };
 
@@ -285,7 +301,7 @@ function PomodoroTimer(): JSX.Element {
     setBreakSuggestion(null);
     setMode(next);
     modeRef.current = next;
-    setTimeLeft(MODES[next].duration);
+    setTimeLeft(modes[next].duration);  // ← modes state
     setTaskName('');
     setSessionId(null);
     sessionIdRef.current = null;
@@ -295,7 +311,7 @@ function PomodoroTimer(): JSX.Element {
   // — Ignorer la pause —
   const handleSkipBreak = () => {
     setBreakSuggestion(null);
-    setTimeLeft(MODES.pomodoro.duration);
+    setTimeLeft(modes.pomodoro.duration);  // ← modes state
     setTaskName('');
   };
 
@@ -314,8 +330,8 @@ function PomodoroTimer(): JSX.Element {
         try {
           const data = await pomodoroService.startSession(
             taskName.trim() || 'Sans nom',
-            MODES[mode].type,
-            MODES[mode].duration / 60,
+            modes[mode].type,
+            modes[mode].duration / 60,  // ← modes state
           );
           console.log('✅ [START] Session créée :', data.session_id);
           setSessionId(data.session_id);
@@ -358,7 +374,7 @@ function PomodoroTimer(): JSX.Element {
       window.clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    setTimeLeft(MODES[mode].duration);
+    setTimeLeft(modes[mode].duration);  // ← modes state
     setTaskName('');
     setBreakSuggestion(null);
   };
@@ -369,7 +385,7 @@ function PomodoroTimer(): JSX.Element {
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
-  const isAtStart = timeLeft === MODES[mode].duration && !isRunning;
+  const isAtStart = timeLeft === modes[mode].duration && !isRunning;
 
   return (
     <div className="w-full h-screen overflow-hidden flex flex-col items-center justify-center bg-white">
@@ -385,7 +401,7 @@ function PomodoroTimer(): JSX.Element {
           <p className="text-2xl font-bold">+{rewardToast.points} pts 🎉</p>
           {rewardToast.multiplier > 1 && (
             <p className="text-yellow-400 text-sm mt-1">
-              🔥 Bonus x{rewardToast.multiplier} — {rewardToast.streak} jours consécutifs
+              🔥 Bonus x{rewardToast.multiplier} — {rewardToast.streak} consecutive days
             </p>
           )}
           {rewardToast.newBadge && (
@@ -445,15 +461,15 @@ function PomodoroTimer(): JSX.Element {
       <div className="flex flex-col items-center gap-6 w-full max-w-md px-4">
 
         <div className="flex gap-3">
-          {Object.entries(MODES).map(([key, val]) => (
+          {(Object.keys(modes) as ModeKey[]).map((key) => (
             <button key={key}
-              onClick={() => handleModeChange(key as ModeKey)}
+              onClick={() => handleModeChange(key)}
               className={`px-5 py-2 rounded-full text-sm font-semibold
                           transition-all duration-200 border-2
-                ${mode === (key as ModeKey)
+                ${mode === key
                   ? 'bg-black text-white border-black shadow-lg'
                   : 'bg-white text-black border-black/70 hover:bg-gray-100'}`}>
-              {val.label}
+              {modes[key].label}
             </button>
           ))}
         </div>
@@ -480,7 +496,6 @@ function PomodoroTimer(): JSX.Element {
                          text-center text-sm font-medium outline-none
                          focus:border-black transition-colors bg-gray-50
                          placeholder:text-gray-400"
-                         required
             />
           </div>
         )}
@@ -553,19 +568,103 @@ function PomodoroTimer(): JSX.Element {
         {showSettings && (
           <div className="bg-gray-100 rounded-2xl p-5 w-72 shadow-lg border border-black/20">
             <h3 className="text-black font-bold text-base mb-4">Settings</h3>
-            <div className="space-y-3 text-sm text-black">
-              {Object.entries(MODES).map(([key, val]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <span className="capitalize">{val.label}</span>
-                  <span className="font-semibold">{val.duration / 60} min</span>
+
+            <div className="space-y-3">
+              {(Object.keys(modes) as ModeKey[]).map((key) => (
+                <div key={key} className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-black capitalize flex-1">
+                    {modes[key].label}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {/* Bouton - */}
+                    <button
+                      onClick={() =>
+                        setTempDurations((prev) => ({
+                          ...prev,
+                          [key]: Math.max(1, prev[key as keyof typeof prev] - 1),
+                        }))
+                      }
+                      className="w-7 h-7 rounded-full bg-black/10 hover:bg-black/20
+                                 flex items-center justify-center text-black font-bold
+                                 transition-colors text-sm leading-none"
+                    >
+                      −
+                    </button>
+
+                    {/* Input numérique */}
+                    <input
+                      type="number"
+                      min={1}
+                      max={120}
+                      value={tempDurations[key as keyof typeof tempDurations]}
+                      onChange={(e) => {
+                        const val = Math.max(1, Math.min(120, Number(e.target.value)));
+                        setTempDurations((prev) => ({ ...prev, [key]: val }));
+                      }}
+                      className="w-12 text-center text-sm font-semibold border-2
+                                 border-black/20 rounded-lg py-1 outline-none
+                                 focus:border-black bg-white"
+                    />
+
+                    {/* Bouton + */}
+                    <button
+                      onClick={() =>
+                        setTempDurations((prev) => ({
+                          ...prev,
+                          [key]: Math.min(120, prev[key as keyof typeof prev] + 1),
+                        }))
+                      }
+                      className="w-7 h-7 rounded-full bg-black/10 hover:bg-black/20
+                                 flex items-center justify-center text-black font-bold
+                                 transition-colors text-sm leading-none"
+                    >
+                      +
+                    </button>
+
+                    <span className="text-xs text-black/40 w-5">min</span>
+                  </div>
                 </div>
               ))}
             </div>
-            <button onClick={() => setShowSettings(false)}
-              className="mt-4 w-full py-2 rounded-lg bg-black text-white text-sm
-                         font-semibold hover:bg-gray-800 transition-colors">
-              Close
-            </button>
+
+            {/* Boutons Apply + Reset */}
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => {
+                  // Appliquer les nouvelles durées
+                  setModes((prev) => ({
+                    pomodoro:   { ...prev.pomodoro,   duration: tempDurations.pomodoro   * 60 },
+                    shortBreak: { ...prev.shortBreak, duration: tempDurations.shortBreak * 60 },
+                    longBreak:  { ...prev.longBreak,  duration: tempDurations.longBreak  * 60 },
+                  }));
+                  // Mettre à jour le timer si pas en cours
+                  if (!isRunning) {
+                    setTimeLeft(tempDurations[mode as keyof typeof tempDurations] * 60);
+                  }
+                  setShowSettings(false);
+                }}
+                className="flex-1 py-2 rounded-lg bg-black text-white text-sm
+                           font-semibold hover:bg-gray-800 transition-colors"
+              >
+                Apply
+              </button>
+
+              <button
+                onClick={() => {
+                  // Remettre les valeurs par défaut
+                  setTempDurations({ pomodoro: 25, shortBreak: 5, longBreak: 15 });
+                  setModes(DEFAULT_DURATIONS);
+                  if (!isRunning) {
+                    setTimeLeft(DEFAULT_DURATIONS[mode].duration);
+                  }
+                  setShowSettings(false);
+                }}
+                className="px-3 py-2 rounded-lg border-2 border-black/20 text-black/50
+                           text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                Reset
+              </button>
+            </div>
           </div>
         )}
       </div>
